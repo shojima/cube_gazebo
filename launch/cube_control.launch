@@ -1,0 +1,36 @@
+<?xml version='1.0'?>
+
+<launch>
+
+  <!-- Load joint controller configurations from YAML file to parameter server -->
+  <rosparam file="$(find cube_gazebo)/config/cube_base_controllers.yaml" command="load"/>
+
+  <!-- load the controllers -->
+<!--  <node name="controller_manager" pkg="controller_manager" type="spawner" respawn="false"
+        output="screen" ns="/cube_base" args="wheel1_controller wheel2_controller  wheel3_controller  wheel4_controller "/> -->
+   <!-- start specified joint controllers -->
+    <node name="base_dynamixel_controller_spawner" pkg="dynamixel_controllers" type="controller_spawner.py"
+          args="--manager=dxl_manager
+                --port=cube_base_port
+                --type=simple
+                wheel1_controller
+                wheel2_controller
+                wheel3_controller
+                wheel4_controller"
+          output="screen"/>
+
+
+  <!-- convert joint states to TF transforms for rviz, etc -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
+    <remap from="/joint_states" to="/cube_base/joint_states" />
+  </node>
+
+  <!-- servo node -->
+  <node pkg="cube_gazebo" type="servo_commands.py" name="servo_commands" output="screen">
+    <remap from="/cube_base/ackermann_cmd_mux/output" to="/vesc/ackermann_cmd_mux/output"/>
+  </node>
+
+  <!-- Allow for Gazebo to broadcast odom -->
+  <node pkg="cube_gazebo" name="gazebo_odometry_node" type="gazebo_odometry.py"/>
+
+</launch>
